@@ -1,6 +1,7 @@
-use axum::{response::Html, routing::get, serve::Serve, Router};
+use axum::{serve::Serve, Router};
 use std::error::Error;
 use tower_http::services::ServeDir;
+
 // This struct encapsulates our application-related logic.
 pub struct Application {
     server: Serve<Router, Router>,
