@@ -20,8 +20,6 @@ pub struct HashmapUserStore {
 
 impl HashmapUserStore {
     pub fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
-        // Return `UserStoreError::UserAlreadyExists` if the user already exists,
-        // otherwise insert the user into the hashmap and return `Ok(())`.
         if self.users.contains_key(user.email.as_str()) {
             return Err(UserStoreError::UserAlreadyExists);
         };
