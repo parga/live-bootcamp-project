@@ -2,6 +2,7 @@ pub mod domain;
 pub mod routes;
 pub mod services;
 
+use crate::domain::data_stores::UserStore;
 use crate::domain::error::AuthAPIError;
 use crate::routes::{login, logout, signup, verify_2fa, verify_token};
 use axum::http::StatusCode;
@@ -14,8 +15,6 @@ use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::services::ServeDir;
-
-use crate::services::hashmap_user_store::HashmapUserStore;
 
 #[derive(Serialize, Deserialize)]
 pub struct ErrorResponse {
@@ -38,8 +37,7 @@ impl IntoResponse for AuthAPIError {
     }
 }
 
-// Using a type alias to improve readability!
-pub type UserStoreType = Arc<RwLock<HashmapUserStore>>;
+pub type UserStoreType = Arc<RwLock<dyn UserStore>>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -51,6 +49,7 @@ impl AppState {
         Self { user_store }
     }
 }
+
 pub struct Application {
     server: Serve<Router, Router>,
     pub address: String,

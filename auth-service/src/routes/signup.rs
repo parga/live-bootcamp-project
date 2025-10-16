@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::error::AuthAPIError;
 use crate::domain::user::User;
-use crate::services::hashmap_user_store::UserStoreError;
+use crate::domain::data_stores::UserStoreError;
 use crate::AppState;
+
 
 pub async fn signup(
     State(state): State<AppState>,
@@ -21,14 +22,11 @@ pub async fn signup(
 
     let mut user_store = state.user_store.write().await;
 
-    match user_store.add_user(user) {
-        Ok(_) => {},
-        Err(err) => {
-            return match err {
+    if let Err(err) = user_store.add_user(user).await {
+        return match err {
                 UserStoreError::UserAlreadyExists => Err(AuthAPIError::UserAlreadyExists),
                 _ => Err(AuthAPIError::UnexpectedError)
             };
-        } ,
     }
     let response = Json(SignupResponse {
         message: "User created successfully!".to_string(),
