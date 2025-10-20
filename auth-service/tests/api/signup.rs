@@ -101,7 +101,7 @@ async fn should_return_409_if_email_already_exists() {
     let app = TestApp::new().await;
     let test_case = serde_json::json!({
         "email": "foo.foo@gmail.com",
-        "password": "password123",
+        "password": "password123asdf",
         "requires2FA": false
     });
 

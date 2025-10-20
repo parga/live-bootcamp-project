@@ -1,8 +1,8 @@
 use auth_service::services::hashmap_user_store::HashmapUserStore;
 use auth_service::{AppState, Application};
-use uuid::Uuid;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 pub struct TestApp {
     pub address: String,
@@ -53,21 +53,25 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
-    pub async fn get_login(&self) -> reqwest::Response {
+    pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
         self.http_client
-            .post(format!("{}/login", &self.address))
+            .post(&format!("{}/login", &self.address))
+            .json(body)
             .send()
             .await
             .expect("Failed to execute request.")
     }
 
-    pub async fn get_logout(&self) -> reqwest::Response {
-        self.http_client
-            .post(format!("{}/logout", &self.address))
-            .send()
-            .await
-            .expect("Failed to execute request.")
-    }
+    // pub async fn get_logout(&self) -> reqwest::Response {
+    //     self.http_client
+    //         .get(format!("{}/logout", &self.address))
+    //         .send()
+    //         .await
+    //         .expect("Failed to execute request.")
+    // }
 
     pub async fn get_verify_2fa(&self) -> reqwest::Response {
         self.http_client
