@@ -1,6 +1,7 @@
 pub mod domain;
 pub mod routes;
 pub mod services;
+pub mod utils;
 
 use crate::domain::data_stores::UserStore;
 use crate::domain::error::AuthAPIError;
