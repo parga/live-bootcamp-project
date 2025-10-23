@@ -6,7 +6,7 @@ pub mod utils;
 use crate::domain::data_stores::UserStore;
 use crate::domain::error::AuthAPIError;
 use crate::routes::{login, logout, signup, verify_2fa, verify_token};
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::Json;
@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
 #[derive(Serialize, Deserialize)]
@@ -27,7 +28,11 @@ impl IntoResponse for AuthAPIError {
         let (status, error_message) = match self {
             AuthAPIError::UserAlreadyExists => (StatusCode::CONFLICT, "User already exists"),
             AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
-            AuthAPIError::IncorrectCredentials => (StatusCode::UNAUTHORIZED, "Incorrect credentials"),
+            AuthAPIError::IncorrectCredentials => {
+                (StatusCode::UNAUTHORIZED, "Incorrect credentials")
+            }
+            AuthAPIError::MissingToken => (StatusCode::BAD_REQUEST, "Missing Token"),
+            AuthAPIError::InvalidToken => (StatusCode::UNAUTHORIZED, "InvalidToken"),
             AuthAPIError::UnexpectedError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error")
             }
@@ -59,6 +64,19 @@ pub struct Application {
 
 impl Application {
     pub async fn build(app_state: AppState, address: &str) -> Result<Self, Box<dyn Error>> {
+        let allowed_origins = [
+            "http://localhost:8000".parse()?,
+            // TODO: Replace [YOUR_DROPLET_IP] with your Droplet IP address
+            "http://134.209.78.82:8000".parse()?,
+        ];
+
+        let cors = CorsLayer::new()
+            // Allow GET and POST requests
+            .allow_methods([Method::GET, Method::POST])
+            // Allow cookies to be included in requests
+            .allow_credentials(true)
+            .allow_origin(allowed_origins);
+
         let router = Router::new()
             .nest_service("/", ServeDir::new("assets"))
             .route("/signup", post(signup))
@@ -66,7 +84,8 @@ impl Application {
             .route("/logout", post(logout))
             .route("/verify-2fa", post(verify_2fa))
             .route("/verify-token", post(verify_token))
-            .with_state(app_state);
+            .with_state(app_state)
+            .layer(cors); // Add CORS config to our Axum router
 
         let listener = tokio::net::TcpListener::bind(address).await?;
         let address = listener.local_addr()?.to_string();
