@@ -32,7 +32,7 @@ impl IntoResponse for AuthAPIError {
                 (StatusCode::UNAUTHORIZED, "Incorrect credentials")
             }
             AuthAPIError::MissingToken => (StatusCode::BAD_REQUEST, "Missing Token"),
-            AuthAPIError::InvalidToken => (StatusCode::UNAUTHORIZED, "InvalidToken"),
+            AuthAPIError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid Token"),
             AuthAPIError::UnexpectedError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error")
             }

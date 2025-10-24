@@ -54,3 +54,9 @@ pub struct LoginRequest {
 pub struct LoginResponse {
     pub message: String,
 }
+
+
+#[derive(Deserialize)]
+pub struct VerifyTokenRequest {
+    pub token: String,
+}
