@@ -39,7 +39,9 @@ pub async fn login(
 
     let auth_cookie = generate_auth_cookie(&email).unwrap();
 
+
     let updated_jar = jar.add(auth_cookie);
+    println!("succesfull login");
 
     (updated_jar, Ok(StatusCode::OK.into_response()))
 }
@@ -56,7 +58,3 @@ pub struct LoginResponse {
 }
 
 
-#[derive(Deserialize)]
-pub struct VerifyTokenRequest {
-    pub token: String,
-}

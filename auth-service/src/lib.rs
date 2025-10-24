@@ -2,8 +2,9 @@ pub mod domain;
 pub mod routes;
 pub mod services;
 pub mod utils;
+pub mod app_state;
 
-use crate::domain::data_stores::UserStore;
+use crate::app_state::AppState;
 use crate::domain::error::AuthAPIError;
 use crate::routes::{login, logout, signup, verify_2fa, verify_token};
 use axum::http::{Method, StatusCode};
@@ -13,8 +14,6 @@ use axum::Json;
 use axum::{routing::post, serve::Serve, Router};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
@@ -44,18 +43,6 @@ impl IntoResponse for AuthAPIError {
     }
 }
 
-pub type UserStoreType = Arc<RwLock<dyn UserStore>>;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub user_store: UserStoreType,
-}
-
-impl AppState {
-    pub fn new(user_store: UserStoreType) -> Self {
-        Self { user_store }
-    }
-}
 
 pub struct Application {
     server: Serve<Router, Router>,
@@ -66,14 +53,11 @@ impl Application {
     pub async fn build(app_state: AppState, address: &str) -> Result<Self, Box<dyn Error>> {
         let allowed_origins = [
             "http://localhost:8000".parse()?,
-            // TODO: Replace [YOUR_DROPLET_IP] with your Droplet IP address
             "http://134.209.78.82:8000".parse()?,
         ];
 
         let cors = CorsLayer::new()
-            // Allow GET and POST requests
             .allow_methods([Method::GET, Method::POST])
-            // Allow cookies to be included in requests
             .allow_credentials(true)
             .allow_origin(allowed_origins);
 

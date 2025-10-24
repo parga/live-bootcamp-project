@@ -70,6 +70,7 @@ async fn protected(jar: CookieJar) -> impl IntoResponse {
         }
     };
 
+    println!("verification of the token returned status: {}", response.status());
     match response.status() {
         reqwest::StatusCode::UNAUTHORIZED | reqwest::StatusCode::BAD_REQUEST => {
             StatusCode::UNAUTHORIZED.into_response()

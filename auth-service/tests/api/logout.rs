@@ -1,7 +1,7 @@
 use auth_service::utils::constants::JWT_COOKIE_NAME;
 use reqwest::Url;
 
-use crate::helpers::TestApp;
+use crate::helpers::{get_random_email, TestApp};
 
 #[tokio::test]
 async fn should_return_400_if_jwt_cookie_missing() {
@@ -35,28 +35,56 @@ async fn should_return_401_if_invalid_token() {
 
 #[tokio::test]
 async fn should_return_200_if_valid_jwt_cookie() {
+let app = TestApp::new().await;
+
+    let random_email = get_random_email();
+
     let signup_body = serde_json::json!({
-        "email": "foo.bar@gmail.com",
-        "password": "password1234",
-        "requires2FA": false 
+        "email": random_email,
+        "password": "password123",
+        "requires2FA": false
     });
-    let login_body = serde_json::json!({
-        "email": "foo.bar@gmail.com",
-        "password": "password1234",
-    });
-
-
-    let app = TestApp::new().await;
 
     let response = app.post_signup(&signup_body).await;
-    assert_eq!(response.status().as_u16(), 201, "Falied to signup the user");
+
+    assert_eq!(response.status().as_u16(), 201);
+
+    let login_body = serde_json::json!({
+        "email": random_email,
+        "password": "password123",
+    });
 
     let response = app.post_login(&login_body).await;
-    assert_eq!(response.status().as_u16(), 200, "Failed login");
+
+    assert_eq!(response.status().as_u16(), 200);
+
+    let auth_cookie = response
+        .cookies()
+        .find(|cookie| cookie.name() == JWT_COOKIE_NAME)
+        .expect("No auth cookie found");
+
+    assert!(!auth_cookie.value().is_empty());
+
+    let token = auth_cookie.value();
 
     let response = app.post_logout().await;
 
     assert_eq!(response.status().as_u16(), 200);
+
+    let auth_cookie = response
+        .cookies()
+        .find(|cookie| cookie.name() == JWT_COOKIE_NAME)
+        .expect("No auth cookie found");
+
+    assert!(auth_cookie.value().is_empty());
+
+    let banned_token_store = app.banned_token_store.read().await;
+    let contains_token = banned_token_store
+        .contains_token(token)
+        .await
+        .expect("Failed to check if token is banned");
+
+    assert!(contains_token);
 }
 
 #[tokio::test]
