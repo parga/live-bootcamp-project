@@ -61,22 +61,33 @@ async fn handle_2fa(
     CookieJar,
     Result<(StatusCode, Json<LoginResponse>), AuthAPIError>,
 ) {
-    let mut store = state.two_fa_code_store.write().await;
+    let mut two_fa_code_store = state.two_fa_code_store.write().await;
+    let email_client = state.email_client.read().await;
     let two_fa_code = TwoFACode::default();
     let login_atempt_id = LoginAttemptId::default();
 
-    let result = store
-        .add_code(email.clone(), login_atempt_id.clone(), two_fa_code)
+    let result = two_fa_code_store
+        .add_code(email.clone(), login_atempt_id.clone(), two_fa_code.clone())
         .await;
 
     match result {
         Ok(_) => {
-            let response = Json(LoginResponse::TwoFactorAuth(TwoFactorAuthResponse {
-                message: "2FA required".to_owned(),
-                login_attempt_id: login_atempt_id.as_ref().to_owned(), 
-            }));
+            let email_response = email_client
+                .send_email(&email, "Here is your auth code", two_fa_code.as_ref())
+                .await;
+            match email_response {
+                Ok(_) => {
+                    let response = Json(LoginResponse::TwoFactorAuth(TwoFactorAuthResponse {
+                        message: "2FA required".to_owned(),
+                        login_attempt_id: login_atempt_id.as_ref().to_owned(),
+                    }));
 
-            (jar, Ok((StatusCode::PARTIAL_CONTENT, response)))
+                    return (jar, Ok((StatusCode::PARTIAL_CONTENT, response)));
+                }
+                Err(_) => {
+                    return (jar, Err(AuthAPIError::UnexpectedError));
+                }
+            }
         }
         Err(_) => (jar, Err(AuthAPIError::UnexpectedError)),
     }
