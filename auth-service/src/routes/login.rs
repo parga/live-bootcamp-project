@@ -73,7 +73,7 @@ async fn handle_2fa(
     match result {
         Ok(_) => {
             let email_response = email_client
-                .send_email(&email, "Here is your auth code", two_fa_code.as_ref())
+                .send_email(email, "Here is your auth code", two_fa_code.as_ref())
                 .await;
             match email_response {
                 Ok(_) => {
@@ -82,10 +82,10 @@ async fn handle_2fa(
                         login_attempt_id: login_atempt_id.as_ref().to_owned(),
                     }));
 
-                    return (jar, Ok((StatusCode::PARTIAL_CONTENT, response)));
+                    (jar, Ok((StatusCode::PARTIAL_CONTENT, response)))
                 }
                 Err(_) => {
-                    return (jar, Err(AuthAPIError::UnexpectedError));
+                    (jar, Err(AuthAPIError::UnexpectedError))
                 }
             }
         }

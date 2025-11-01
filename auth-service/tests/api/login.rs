@@ -61,8 +61,6 @@ async fn should_return_400_if_invalid_input() {
 
 #[tokio::test]
 async fn should_return_401_if_incorrect_credentials() {
-    // Call the log-in route with incorrect credentials and assert
-    // that a 401 HTTP status code is returned along with the appropriate error message.
     let app = TestApp::new().await;
 
     let random_email = get_random_email(); // Call helper method to generate email
@@ -154,10 +152,10 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
     assert_eq!(json_body.message, "2FA required".to_owned());
 
     let store = app.two_fa_code_store.read().await;
-    let (login_attemp_id, _) = store
+    let (login_attempt_id, _) = store
         .get_code(&Email::parse(random_email.as_str()).unwrap())
         .await
         .unwrap();
 
-    assert_eq!(json_body.login_attempt_id, login_attemp_id.as_ref());
+    assert_eq!(json_body.login_attempt_id, login_attempt_id.as_ref());
 }
