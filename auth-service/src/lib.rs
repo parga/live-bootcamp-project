@@ -13,6 +13,8 @@ use axum::response::Response;
 use axum::Json;
 use axum::{routing::post, serve::Serve, Router};
 use serde::{Deserialize, Serialize};
+use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 use std::error::Error;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
@@ -82,4 +84,9 @@ impl Application {
         println!("listening on {}", &self.address);
         self.server.await
     }
+}
+
+pub async fn get_postgres_pool(url: &str) -> Result<PgPool, sqlx::Error> {
+    // Create a new PostgreSQL connection pool
+    PgPoolOptions::new().max_connections(5).connect(url).await
 }
