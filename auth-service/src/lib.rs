@@ -1,8 +1,8 @@
+pub mod app_state;
 pub mod domain;
 pub mod routes;
 pub mod services;
 pub mod utils;
-pub mod app_state;
 
 use crate::app_state::AppState;
 use crate::domain::error::AuthAPIError;
@@ -45,7 +45,6 @@ impl IntoResponse for AuthAPIError {
     }
 }
 
-
 pub struct Application {
     server: Serve<Router, Router>,
     pub address: String,
@@ -87,6 +86,5 @@ impl Application {
 }
 
 pub async fn get_postgres_pool(url: &str) -> Result<PgPool, sqlx::Error> {
-    // Create a new PostgreSQL connection pool
     PgPoolOptions::new().max_connections(5).connect(url).await
 }

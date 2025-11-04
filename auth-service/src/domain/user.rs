@@ -1,9 +1,12 @@
 use crate::domain::{email::Email, password::Password};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct User {
     pub email: Email,
+
+    #[sqlx(rename = "password_hash")]
     pub password: Password,
+
     pub requires_2fa: bool,
 }
 
