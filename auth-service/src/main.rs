@@ -1,12 +1,12 @@
 use auth_service::get_redis_client;
 use auth_service::services::data_stores::postgres_user_store::PostgresUserStore;
 use auth_service::services::data_stores::redis_banned_token_store::RedisBannedTokenStore;
+use auth_service::services::data_stores::redis_two_fa_code_store::RedisTwoFACodeStore;
 use auth_service::services::mock_email_client::MockEmailClient;
 use auth_service::utils::constants::REDIS_HOST_NAME;
 use auth_service::{
     app_state::AppState,
     get_postgres_pool,
-    services::data_stores::hashmap_two_fa_code_store::HashmapTwoFACodeStore,
     utils::constants::{prod, DATABASE_URL},
     Application,
 };
@@ -16,10 +16,10 @@ use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() {
-    let two_fa_code_store = Arc::new(RwLock::new(HashmapTwoFACodeStore::default()));
     let email_client = Arc::new(RwLock::new(MockEmailClient));
 
     let redis_client = Arc::new(RwLock::new(configure_redis()));
+    let two_fa_code_store = Arc::new(RwLock::new(RedisTwoFACodeStore::new(redis_client.clone())));
     let banned_token_store = Arc::new(RwLock::new(RedisBannedTokenStore::new(redis_client)));
 
     let pg_pool = configure_postgresql().await;
