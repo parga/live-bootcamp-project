@@ -16,6 +16,7 @@ services:
     environment:
       JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432"
+      REDIS_HOST_NAME: ${REDIS_HOST_NAME}
     ports:
       - "3000:3000"
     depends_on:

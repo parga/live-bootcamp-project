@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::domain::{email::Email, EmailClient};
 
 #[derive(Default)]
@@ -11,14 +13,15 @@ impl EmailClient for MockEmailClient {
         subject: &str,
         content: &str,
     ) -> Result<(), String> {
-        // Our mock email client will simply log the recipient, subject, and content to standard output
-        println!(
-            "Sending email to {} with subject: {} and content: {}",
-            recipient.as_ref(),
-            subject,
-            content
-        );
-
-        Ok(())
+        let current_span: tracing::Span = tracing::Span::current();
+        current_span.in_scope(|| {
+            info!(
+                "Sending email to {} with subject: {} and content: {}",
+                recipient.as_ref(),
+                subject,
+                content
+            );
+            Ok(())
+        })
     }
 }

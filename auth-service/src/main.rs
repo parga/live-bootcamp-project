@@ -4,6 +4,7 @@ use auth_service::services::data_stores::redis_banned_token_store::RedisBannedTo
 use auth_service::services::data_stores::redis_two_fa_code_store::RedisTwoFACodeStore;
 use auth_service::services::mock_email_client::MockEmailClient;
 use auth_service::utils::constants::REDIS_HOST_NAME;
+use auth_service::utils::tracing::init_tracing;
 use auth_service::{
     app_state::AppState,
     get_postgres_pool,
@@ -16,6 +17,8 @@ use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() {
+    init_tracing();
+
     let email_client = Arc::new(RwLock::new(MockEmailClient));
 
     let redis_client = Arc::new(RwLock::new(configure_redis()));
