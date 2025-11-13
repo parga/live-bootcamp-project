@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use crate::{app_state::AppState, domain::error::AuthAPIError, utils::auth::validate_token};
 
+#[tracing::instrument(name = "Verify token", skip_all)]
 pub async fn verify_token(
     State(state): State<AppState>,
     Json(request): Json<VerifyTokenRequest>,
@@ -12,7 +13,8 @@ pub async fn verify_token(
     if response.is_err() {
         return Err(AuthAPIError::InvalidToken);
     }
-    println!("token is verified and valid: {:?}", response);
+
+    tracing::debug!("token is verified and valid: {:?}", response);
     Ok(StatusCode::OK)
 }
 

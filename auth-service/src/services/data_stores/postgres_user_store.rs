@@ -71,7 +71,7 @@ impl UserStore for PostgresUserStore {
             Err(_) => Err(UserStoreError::UserNotFound),
         }
     }
-    #[tracing::instrument(name = "Adding user to PostgreSQL", skip_all)] // New!
+    #[tracing::instrument(name = "Adding user to PostgreSQL", skip_all)] 
     async fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
         let password_hash = compute_password_hash(user.password.as_ref().to_owned()).await;
         let password_hash = password_hash.unwrap();
@@ -79,7 +79,7 @@ impl UserStore for PostgresUserStore {
         let existing = sqlx::query!("SELECT * FROM users WHERE email = $1", user.email.as_ref())
             .fetch_optional(&self.pool)
             .await
-            .map_err(|_| UserStoreError::UnexpectedError)?;
+            .map_err(|e| UserStoreError::UnexpectedError(e.into()))?;
 
         if existing.is_some() {
             return Err(UserStoreError::UserAlreadyExists);
@@ -96,7 +96,7 @@ impl UserStore for PostgresUserStore {
 
         match row {
             Ok(_) => Ok(()),
-            Err(_) => Err(UserStoreError::UnexpectedError),
+            Err(e) => Err(UserStoreError::UnexpectedError(e.into())),
         }
     }
 }
@@ -128,7 +128,6 @@ async fn compute_password_hash(password: String) -> Result<String, Box<dyn Error
     let password_hash: Result<String, Box<dyn Error + Send + Sync>> =
         tokio::task::spawn_blocking(move || {
             current_span.in_scope(|| {
-                // New!
                 let salt: SaltString = SaltString::generate(&mut rand::thread_rng());
                 let  password_hash = Argon2::new(
                     Algorithm::Argon2id,

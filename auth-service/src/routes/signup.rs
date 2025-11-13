@@ -23,7 +23,7 @@ pub async fn signup(
     if let Err(err) = user_store.add_user(user).await {
         return match err {
                 UserStoreError::UserAlreadyExists => Err(AuthAPIError::UserAlreadyExists),
-                _ => Err(AuthAPIError::UnexpectedError)
+                e => Err(AuthAPIError::UnexpectedError(e.into()))
             };
     }
     let response = Json(SignupResponse {

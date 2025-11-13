@@ -9,7 +9,9 @@ use crate::domain::data_stores::{LoginAttemptId, TwoFACode};
 use crate::domain::email::Email;
 use crate::domain::error::AuthAPIError;
 use crate::utils::auth::generate_auth_cookie;
+use color_eyre::eyre::{eyre, Result};
 
+#[tracing::instrument(name = "Sending email", skip_all)]
 pub async fn verify_2fa(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -49,13 +51,25 @@ pub async fn verify_2fa(
         Ok(_) => {
             let cookie = match generate_auth_cookie(&email) {
                 Ok(cookie) => cookie,
-                Err(_) => return (jar, Err(AuthAPIError::UnexpectedError)),
+                Err(_) => {
+                    return (
+                        jar,
+                        Err(AuthAPIError::UnexpectedError(eyre!(
+                            "Error generating auth cookie"
+                        ))),
+                    )
+                }
             };
 
             let updated_jar = jar.add(cookie);
             (updated_jar, Ok(()))
         }
-        Err(_) => (jar, Err(AuthAPIError::UnexpectedError)),
+        Err(e) => (
+            jar,
+            Err(AuthAPIError::UnexpectedError(eyre!(
+                e.to_string()
+            ))),
+        ),
     }
 }
 

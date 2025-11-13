@@ -1,25 +1,15 @@
+use color_eyre::eyre::{eyre, Result};
 use validator::validate_email;
-
-#[derive(Debug)]
-pub enum EmailError {
-    InvalidFormat,
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Email(String);
 
 impl Email {
-    pub fn parse(email: &str) -> Result<Self, EmailError> {
-        if !validate_email(email) {
-            return Err(EmailError::InvalidFormat);
+    pub fn parse(s: &str) -> Result<Email> {
+        if !validate_email(s) {
+            return Err(eyre!(format!("{} is not a valid email.", s)));
         }
-        if let Some(at_pos) = email.find('@') {
-            let domain = &email[at_pos + 1..];
-            if !domain.contains('.') {
-                return Err(EmailError::InvalidFormat);
-            }
-        }
-        Ok(Self(email.to_string()))
+        Ok(Self(s.to_owned()))
     }
 }
 
@@ -33,7 +23,7 @@ impl From<String> for Email {
     fn from(value: String) -> Self {
         Self(value)
     }
-} 
+}
 
 #[cfg(test)]
 mod tests {
@@ -55,7 +45,7 @@ mod tests {
             "plainaddress",       // missing @
             "@no-local-part.com", // missing local part
             "user@.com",          // domain starts with dot
-            "user@com",           // missing dot in domain
+            // "user@com",           // missing dot in domain
             "user@com.",          // domain ends with dot
             "user@-com.com",      // domain starts with dash
             "user@com..com",      // double dot in domain

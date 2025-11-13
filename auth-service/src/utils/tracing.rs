@@ -1,12 +1,12 @@
-use std::time::Duration;
-use color_eyre::eyre::Result;
-use tracing_error::ErrorLayer;
-use tracing_subscriber::{prelude::*, registry};
-use tracing_subscriber::{fmt, EnvFilter};
 use axum::{body::Body, extract::Request, response::Response};
+use color_eyre::eyre::Result;
+use std::time::Duration;
 use tracing::{Level, Span};
+use tracing_error::ErrorLayer;
+use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{layer::SubscriberExt, registry, util::SubscriberInitExt};
 
-pub fn init_tracing() -> Result<(),> {
+pub fn init_tracing() -> Result<()> {
     // Create a formatting layer for tracing output with a compact format
     let fmt_layer = fmt::layer().compact();
 

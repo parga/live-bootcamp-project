@@ -1,5 +1,6 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse};
 use axum_extra::extract::CookieJar;
+use color_eyre::eyre::Result;
 
 use crate::{
     app_state::AppState,
@@ -7,6 +8,7 @@ use crate::{
     AuthAPIError,
 };
 
+#[tracing::instrument(name = "Logging out", skip_all)]
 pub async fn logout(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -23,15 +25,14 @@ pub async fn logout(
         return (jar, Err(AuthAPIError::InvalidToken));
     }
 
-    if state
+    if let Err(e) = state
         .banned_token_store
         .write()
         .await
         .add_token(token.to_owned())
         .await
-        .is_err()
     {
-        return (jar, Err(AuthAPIError::UnexpectedError));
+        return (jar, Err(AuthAPIError::UnexpectedError(e.into())));
     }
 
     let jar = jar.remove(JWT_COOKIE_NAME);

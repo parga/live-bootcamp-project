@@ -21,7 +21,6 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use std::error::Error;
-use std::fmt;
 
 #[derive(Serialize, Deserialize)]
 pub struct ErrorResponse {
@@ -39,7 +38,7 @@ impl IntoResponse for AuthAPIError {
             }
             AuthAPIError::MissingToken => (StatusCode::BAD_REQUEST, "Missing Token"),
             AuthAPIError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid Token"),
-            AuthAPIError::UnexpectedError => {
+            AuthAPIError::UnexpectedError(_) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error")
             }
         };
@@ -49,15 +48,6 @@ impl IntoResponse for AuthAPIError {
         (status, body).into_response()
     }
 }
-
-
-impl fmt::Display for AuthAPIError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for AuthAPIError {}
 
 pub struct Application {
     server: Serve<Router, Router>,
@@ -84,12 +74,8 @@ impl Application {
             .route("/verify-2fa", post(verify_2fa))
             .route("/verify-token", post(verify_token))
             .with_state(app_state)
-            .layer(cors) // Add CORS config to our Axum router
+            .layer(cors)
             .layer(
-                // New!
-                // Add a TraceLayer for HTTP requests to enable detailed tracing
-                // This layer will create spans for each request using the make_span_with_request_id function,
-                // and log events at the start and end of each request using on_request and on_response functions.
                 TraceLayer::new_for_http()
                     .make_span_with(make_span_with_request_id)
                     .on_request(on_request)

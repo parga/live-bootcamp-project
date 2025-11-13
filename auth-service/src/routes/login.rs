@@ -13,6 +13,7 @@ use crate::{
     AppState,
 };
 
+#[tracing::instrument(name = "Logging in", skip_all)]
 pub async fn login(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -53,6 +54,8 @@ pub async fn login(
     }
 }
 
+
+#[tracing::instrument(name = "login requires 2fa , we are handling it here", skip_all)]
 async fn handle_2fa(
     email: &Email,
     state: &AppState,
@@ -84,15 +87,14 @@ async fn handle_2fa(
 
                     (jar, Ok((StatusCode::PARTIAL_CONTENT, response)))
                 }
-                Err(_) => {
-                    (jar, Err(AuthAPIError::UnexpectedError))
-                }
+                Err(e) => (jar, Err(AuthAPIError::UnexpectedError(e))),
             }
         }
-        Err(_) => (jar, Err(AuthAPIError::UnexpectedError)),
+        Err(e) => (jar, Err(AuthAPIError::UnexpectedError(e.into()))),
     }
 }
 
+#[tracing::instrument(name = "login DOES NOT require 2fa , we are handling it here", skip_all)]
 async fn handle_no_2fa(
     email: &Email,
     jar: CookieJar,

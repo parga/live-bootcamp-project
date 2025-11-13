@@ -7,11 +7,13 @@ use crate::{app_state::BannedTokenStoreType, domain::email::Email};
 
 use super::constants::{JWT_COOKIE_NAME, JWT_SECRET};
 
+#[tracing::instrument(name = "Generating auth cookie based on the email token ", skip_all)]
 pub fn generate_auth_cookie(email: &Email) -> Result<Cookie<'static>, GenerateTokenError> {
     let token = generate_auth_token(email)?;
     Ok(create_auth_cookie(token))
 }
 
+#[tracing::instrument(name = "Creating auth cookie using Cookie::build", skip_all)]
 fn create_auth_cookie(token: String) -> Cookie<'static> {
     let cookie = Cookie::build((JWT_COOKIE_NAME, token))
         .path("/")
@@ -30,6 +32,7 @@ pub enum GenerateTokenError {
 
 pub const TOKEN_TTL_SECONDS: i64 = 600;
 
+#[tracing::instrument(name = "Generate auth token", skip_all)]
 fn generate_auth_token(email: &Email) -> Result<String, GenerateTokenError> {
     let delta = chrono::Duration::try_seconds(TOKEN_TTL_SECONDS)
         .ok_or(GenerateTokenError::UnexpectedError)?;
@@ -50,6 +53,7 @@ fn generate_auth_token(email: &Email) -> Result<String, GenerateTokenError> {
     create_token(&claims).map_err(GenerateTokenError::TokenError)
 }
 
+#[tracing::instrument(name = "Validating token", skip_all)]
 pub async fn validate_token(
     token: &str,
     banned_token_store: BannedTokenStoreType,
@@ -77,6 +81,7 @@ pub async fn validate_token(
     .map(|data| data.claims)
 }
 
+#[tracing::instrument(name = "Creating token", skip_all)]
 fn create_token(claims: &Claims) -> Result<String, jsonwebtoken::errors::Error> {
     encode(
         &jsonwebtoken::Header::default(),

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use color_eyre::eyre::{eyre, Result};
 use redis::{Commands, Connection, RedisResult};
 use tokio::sync::RwLock;
 
@@ -20,21 +21,29 @@ impl RedisBannedTokenStore {
 
 #[async_trait::async_trait]
 impl BannedTokenStore for RedisBannedTokenStore {
+
+    #[tracing::instrument(name = "Adding token to redis store", skip_all)]
     async fn add_token(&mut self, token: String) -> Result<(), BannedTokenStoreError> {
         let mut redis_connection = self.conn.write().await;
-        let result: RedisResult<()> = redis_connection.set_ex(get_key(token.as_str()), true, TOKEN_TTL_SECONDS as u64);
+        let result: RedisResult<()> =
+            redis_connection.set_ex(get_key(token.as_str()), true, TOKEN_TTL_SECONDS as u64);
         match result {
             Ok(_) => Ok(()),
-            Err(_) => Err(BannedTokenStoreError::UnexpectedError),
+            Err(_) => Err(BannedTokenStoreError::UnexpectedError(eyre!(
+                "Error generating auth cookie"
+            ))),
         }
     }
 
+    #[tracing::instrument(name = "Checking if redis store contains token", skip_all)]
     async fn contains_token(&self, token: &str) -> Result<bool, BannedTokenStoreError> {
         let mut redis_connection = self.conn.write().await;
         let result: RedisResult<bool> = redis_connection.exists(get_key(token));
         match result {
             Ok(value) => Ok(value),
-            _ => Err(BannedTokenStoreError::UnexpectedError),
+            Err(_) => Err(BannedTokenStoreError::UnexpectedError(eyre!(
+                "Failed to check if token exists in Redis",
+            ))),
         }
     }
 }
