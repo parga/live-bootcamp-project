@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use argon2::{
-    password_hash::SaltString, Algorithm, Argon2, Params, PasswordHash, PasswordHasher,
+    password_hash::{SaltString}, Algorithm, Argon2, Params, PasswordHash, PasswordHasher,
     PasswordVerifier, Version,
 };
 
@@ -130,7 +130,7 @@ async fn compute_password_hash(password: String) -> Result<String, Box<dyn Error
             current_span.in_scope(|| {
                 // New!
                 let salt: SaltString = SaltString::generate(&mut rand::thread_rng());
-                let password_hash = Argon2::new(
+                let  password_hash = Argon2::new(
                     Algorithm::Argon2id,
                     Version::V0x13,
                     Params::new(15000, 2, 1, None)?,

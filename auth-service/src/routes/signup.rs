@@ -8,7 +8,7 @@ use crate::domain::user::User;
 use crate::domain::data_stores::UserStoreError;
 use crate::AppState;
 
-#[tracing::instrument(name = "Signup", skip_all, err(Debug))] // New!
+#[tracing::instrument(name = "Signup", skip_all)] // New!
 pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,

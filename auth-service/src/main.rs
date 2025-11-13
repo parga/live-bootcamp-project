@@ -17,7 +17,8 @@ use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() {
-    init_tracing();
+    color_eyre::install().expect("Failed to install color_eyre");
+    init_tracing().expect("Failed to initialize tracing");
 
     let email_client = Arc::new(RwLock::new(MockEmailClient));
 
